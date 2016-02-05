@@ -24,8 +24,9 @@ def handle():
 		login_user()
 	elif cmd != 'login':
 		user = manage_user()
+
 		if user:
-			execute_cmd(cmd)	
+			execute_cmd(cmd)
 
 	return build_response("json")
 
@@ -43,7 +44,6 @@ def execute_cmd(cmd, async=False):
 		else:
 			if not method in frappe.whitelisted:
 				return report_error(403,"Not Allowed")
-
 		
 		ret = frappe.call(method, **frappe.form_dict)
 
@@ -54,7 +54,6 @@ def execute_cmd(cmd, async=False):
 			frappe.response["data"] = ret
 		frappe.response["code"] = 200		
 
-
 	except Exception, e:
 		http_status_code = getattr(e, "status_code", 500)
 		message = getattr(e, "message", 500)
@@ -62,13 +61,11 @@ def execute_cmd(cmd, async=False):
 
 	else:
 		pass
-	
+
 	finally:
 		import time
 		ts = int(time.time())
 		frappe.response["timestamp"] = ts
-	
-	
 
 def get_attr(cmd):
 	"""get method object from cmd"""
@@ -79,9 +76,6 @@ def get_attr(cmd):
 		method = globals()[cmd]
 	frappe.log("method:" + cmd)
 	return method
-
-	
-
 
 def login_user():
 	try: 
@@ -99,10 +93,9 @@ def login_user():
 		import time
 		ts = int(time.time())
 		frappe.response["timestamp"] = ts
-	
-		
+
 def manage_user():
-	if frappe.form_dict.data:
+	if frappe.local.request.method in ["POST", "PUT", "DELETE"] and frappe.form_dict.data:
 		data = json.loads(frappe.form_dict.data)		
 		sid = data.get('sid')
 		user_id = data.get('user_id')
@@ -130,7 +123,8 @@ def manage_user():
 					frappe.response["code"] = http_status_code
 					return False
 		return True
+	elif frappe.local.request.method=="GET":
+		return True
 	else:
 		report_error(417,"Input not provided")
 		return False			
-
